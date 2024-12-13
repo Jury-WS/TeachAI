@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI with Self-Learning Functionality</title>
+    <script async src="https://cse.google.com/cse.js?cx=b1f338de3c6014383"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 50px auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .chat-box {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+        .message {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 5px 0;
+            max-width: 80%;
+        }
+        .user-message {
+            background-color: #4CAF50;
+            color: white;
+            text-align: right;
+        }
+        .ai-message {
+            background-color: #f1f1f1;
+            color: black;
+            text-align: left;
+        }
+        input[type="text"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            margin-top: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .timeout-message {
+            color: red;
+            font-weight: bold;
+            text-align: center;
+            display: none;
+        }
+        
+        /* Learning animation styles */
+        .learning-animation {
+            display: none;
+            text-align: center;
+            font-size: 20px;
+            color: #FFA500;
+            font-weight: bold;
+            animation: fadeInOut 3s infinite;
+        }
+
+        @keyframes fadeInOut {
+            0% {
+                opacity: 0;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>AI with Search, Learning, and Basic Responses</h2>
+        <div class="chat-box" id="chat-box">
+            <!-- Chat messages will appear here -->
+        </div>
+        <input type="text" id="user-input" placeholder="Ask a question or provide information..." />
+        <button onclick="sendMessage()">Send</button>
+        <div id="timeout-message" class="timeout-message">Search took too long and was stopped.</div>
+        <div id="learning-message" class="learning-animation">Learning...</div>
+    </div>
+
+    <script>
+        let learnedData = JSON.parse(localStorage.getItem('learnedData')) || [];
+        let selfLearnData = JSON.parse(localStorage.getItem('selfLearnData')) || [];
+
+        // Display learned information when the page loads
+        window.onload = function() {
+            const introMessage = "This is an AI system capable of answering your queries, learning from interactions, and expanding its knowledge base.";
+            displayMessage('ai', introMessage);
+        }
+
+        // Display messages in the chat box
+        function displayMessage(sender, message) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', sender === 'user' ? 'user-message' : 'ai-message');
+            messageDiv.innerText = message;
+            document.getElementById('chat-box').appendChild(messageDiv);
+            document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
+        }
+
+        // Send message and process input
+        function sendMessage() {
+            const userInput = document.getElementById('user-input').value;
+            if (userInput.trim() === '') return;
+
+            // Display user's message
+            displayMessage('user', userInput);
+            document.getElementById('user-input').value = ''; // Clear input
+
+            handleUserInput(userInput);
+        }
+
+        // Handle the user input
+        function handleUserInput(userInput) {
+            // If user says "//self-learn -force", prompt for learning a paragraph
+            if (userInput.toLowerCase().startsWith("//self-learn -force")) {
+                let learnText = userInput.replace("//self-learn -force", "").trim();
+
+                if (learnText && learnText.split(' ').length >= 50) {
+                    // Show learning animation
+                    document.getElementById('learning-message').style.display = 'block';
+
+                    // Simulate a delay for learning (you can replace it with an actual API call or action)
+                    setTimeout(() => {
+                        // Read and process the paragraph, then save it
+                        processAndLearn(learnText);
+
+                        // Hide learning animation and show confirmation
+                        document.getElementById('learning-message').style.display = 'none';
+                        displayMessage('ai', `I have learned the following paragraph: "${learnText}"`);
+                    }, 3000); // Simulate a 3-second learning process
+                } else {
+                    displayMessage('ai', "Please provide at least a 50-word paragraph for me to learn.");
+                }
+            }
+            // Handle basic responses
+            else if (userInput.toLowerCase() === "hi") {
+                displayMessage('ai', "Hello! How can I assist you today?");
+            }
+            else {
+                // If not a self-learn command, proceed to search or use learned data
+                performSearchOrUseLearnedData(userInput);
+            }
+        }
+
+        // Process and learn the paragraph
+        function processAndLearn(paragraph) {
+            // Break down the paragraph into smaller sections or extract key ideas
+            const sentences = paragraph.split('.').map(sentence => sentence.trim()).filter(sentence => sentence.length > 0);
+
+            // Example: Store the sentences as learned data
+            sentences.forEach(sentence => {
+                selfLearnData.push(sentence);
+            });
+
+            // Save learned data to localStorage
+            localStorage.setItem('selfLearnData', JSON.stringify(selfLearnData));
+        }
+
+        // Check if learned data is relevant and respond
+        function performSearchOrUseLearnedData(query) {
+            const relevantLearnedData = selfLearnData.filter(item => item.toLowerCase().includes(query.toLowerCase()));
+
+            if (relevantLearnedData.length > 0) {
+                displayMessage('ai', "Here's what I've learned that might help:");
+                relevantLearnedData.forEach(learned => {
+                    displayMessage('ai', learned);
+                });
+            } else {
+                displayMessage('ai', "I don't have any relevant learned information for this query. Let me search for it...");
+                // Optionally, perform Google Search here if no learned data is found
+            }
+        }
+    </script>
+
+</body>
+</html>
